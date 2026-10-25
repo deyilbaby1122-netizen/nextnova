@@ -28,6 +28,22 @@ const ticker = [
 export function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-line">
+      {/* AI reel looping behind the whole hero (decorative, no audio) */}
+      <video
+        aria-hidden
+        className="hero-video absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="https://assets.mixkit.co/videos/31510/31510-thumb-720-0.jpg"
+        src="https://assets.mixkit.co/videos/31510/31510-720.mp4"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-bg/60"
+      />
       <div aria-hidden className="aurora absolute inset-0" />
       <div aria-hidden className="grid-bg absolute inset-0" />
 

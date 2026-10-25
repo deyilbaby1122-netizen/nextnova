@@ -242,4 +242,8 @@ body {
     opacity: 1;
     transform: none;
   }
+  /* looping hero video: stop showing it for people who opt out of motion */
+  .hero-video {
+    display: none;
+  }
 }

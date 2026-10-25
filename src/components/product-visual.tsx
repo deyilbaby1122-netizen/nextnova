@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
 import type { Product } from "@/lib/types";
 
 const GLYPHS: Record<string, React.ReactNode> = {
@@ -81,9 +85,11 @@ interface ProductVisualProps {
 }
 
 /**
- * Deterministic artwork for a product: a gradient scene, a blueprint grid and
- * a line-art glyph for the category. Generated locally so the marketplace has
- * zero image payload and never hot-links third party assets.
+ * Artwork for a product: the official / press photograph when the catalogue
+ * has one, layered over a generated gradient scene, blueprint grid and
+ * line-art glyph for the category. The photograph is hot-linked from the
+ * vendor (never stored), and the generated scene stays underneath so a
+ * blocked or slow host still leaves a complete picture.
  */
 export function ProductVisual({ product, className = "", withTitle = false }: ProductVisualProps) {
   const hue = product.hue ?? 210;
@@ -92,95 +98,115 @@ export function ProductVisual({ product, className = "", withTitle = false }: Pr
   const glow = `glow-${id}`;
   const grid = `grid-${id}`;
 
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const hasPhoto = Boolean(product.image) && !photoFailed;
+  const label = `${product.brand} ${product.name} artwork`;
+
   return (
-    <svg
-      viewBox="0 0 400 300"
-      role="img"
-      aria-label={`${product.brand} ${product.name} artwork`}
-      className={`h-full w-full ${className}`}
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <linearGradient id={grad} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={`hsl(${hue} 78% 55%)`} />
-          <stop offset="55%" stopColor={`hsl(${(hue + 22) % 360} 62% 34%)`} />
-          <stop offset="100%" stopColor={`hsl(${(hue + 45) % 360} 55% 14%)`} />
-        </linearGradient>
-        <radialGradient id={glow} cx="72%" cy="24%" r="60%">
-          <stop offset="0%" stopColor={`hsl(${hue} 95% 85%)`} stopOpacity="0.75" />
-          <stop offset="100%" stopColor={`hsl(${hue} 95% 85%)`} stopOpacity="0" />
-        </radialGradient>
-        <pattern id={grid} width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="1" />
-        </pattern>
-      </defs>
-
-      <rect width="400" height="300" fill={`url(#${grad})`} />
-      <rect width="400" height="300" fill={`url(#${grid})`} />
-      <rect width="400" height="300" fill={`url(#${glow})`} />
-
-      <g
-        transform="translate(128 46) scale(8.6)"
-        fill="none"
-        stroke="#fff"
-        strokeOpacity="0.4"
-        strokeWidth={0.16}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    <span className={`relative block h-full w-full ${className}`}>
+      <svg
+        viewBox="0 0 400 300"
+        role={hasPhoto ? undefined : "img"}
+        aria-hidden={hasPhoto || undefined}
+        aria-label={hasPhoto ? undefined : label}
+        className="h-full w-full"
+        preserveAspectRatio="xMidYMid slice"
       >
-        {glyphFor(product.category)}
-      </g>
+        <defs>
+          <linearGradient id={grad} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor={`hsl(${hue} 78% 55%)`} />
+            <stop offset="55%" stopColor={`hsl(${(hue + 22) % 360} 62% 34%)`} />
+            <stop offset="100%" stopColor={`hsl(${(hue + 45) % 360} 55% 14%)`} />
+          </linearGradient>
+          <radialGradient id={glow} cx="72%" cy="24%" r="60%">
+            <stop offset="0%" stopColor={`hsl(${hue} 95% 85%)`} stopOpacity="0.75" />
+            <stop offset="100%" stopColor={`hsl(${hue} 95% 85%)`} stopOpacity="0" />
+          </radialGradient>
+          <pattern id={grid} width="26" height="26" patternUnits="userSpaceOnUse">
+            <path d="M26 0H0V26" fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="1" />
+          </pattern>
+        </defs>
 
-      <circle
-        className="animate-float-slow"
-        cx="330"
-        cy="215"
-        r="70"
-        fill="none"
-        stroke="#fff"
-        strokeOpacity="0.25"
-        strokeWidth="1.5"
-      />
-      <circle
-        className="animate-pulse-glow"
-        cx="66"
-        cy="70"
-        r="6"
-        fill="#fff"
-        fillOpacity="0.85"
-      />
-      <circle cx="352" cy="76" r="3" fill="#fff" fillOpacity="0.5" />
+        <rect width="400" height="300" fill={`url(#${grad})`} />
+        <rect width="400" height="300" fill={`url(#${grid})`} />
+        <rect width="400" height="300" fill={`url(#${glow})`} />
 
-      <g fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">
-        <text x="24" y="34" fill="#fff" fillOpacity="0.9" fontSize="15" letterSpacing="3.2">
-          {product.brand.toUpperCase()}
-        </text>
-        <text x="24" y="52" fill="#fff" fillOpacity="0.6" fontSize="11" letterSpacing="2">
-          {product.category.toUpperCase()}
-        </text>
-        {withTitle ? (
-          <text x="24" y="276" fill="#fff" fontSize="30" fontWeight="700">
-            {product.name}
-          </text>
-        ) : null}
-      </g>
-
-      {product.status === "upcoming" ? (
-        <g transform="translate(300 18)">
-          <rect width="80" height="24" rx="12" fill="#05070f" fillOpacity="0.55" />
-          <text
-            x="40"
-            y="16"
-            textAnchor="middle"
-            fill="#fff"
-            fontSize="11"
-            letterSpacing="1.4"
-            fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-          >
-            SOON
-          </text>
+        <g
+          transform="translate(128 46) scale(8.6)"
+          fill="none"
+          stroke="#fff"
+          strokeOpacity="0.4"
+          strokeWidth={0.16}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {glyphFor(product.category)}
         </g>
+
+        <circle
+          className="animate-float-slow"
+          cx="330"
+          cy="215"
+          r="70"
+          fill="none"
+          stroke="#fff"
+          strokeOpacity="0.25"
+          strokeWidth="1.5"
+        />
+        <circle
+          className="animate-pulse-glow"
+          cx="66"
+          cy="70"
+          r="6"
+          fill="#fff"
+          fillOpacity="0.85"
+        />
+        <circle cx="352" cy="76" r="3" fill="#fff" fillOpacity="0.5" />
+
+        <g fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">
+          <text x="24" y="34" fill="#fff" fillOpacity="0.9" fontSize="15" letterSpacing="3.2">
+            {product.brand.toUpperCase()}
+          </text>
+          <text x="24" y="52" fill="#fff" fillOpacity="0.6" fontSize="11" letterSpacing="2">
+            {product.category.toUpperCase()}
+          </text>
+          {withTitle ? (
+            <text x="24" y="276" fill="#fff" fontSize="30" fontWeight="700">
+              {product.name}
+            </text>
+          ) : null}
+        </g>
+
+        {product.status === "upcoming" ? (
+          <g transform="translate(300 18)">
+            <rect width="80" height="24" rx="12" fill="#05070f" fillOpacity="0.55" />
+            <text
+              x="40"
+              y="16"
+              textAnchor="middle"
+              fill="#fff"
+              fontSize="11"
+              letterSpacing="1.4"
+              fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+            >
+              SOON
+            </text>
+          </g>
+        ) : null}
+      </svg>
+
+      {product.image && !photoFailed ? (
+        <Image
+          src={product.image}
+          alt={product.imageAlt ?? `${product.brand} ${product.name}`}
+          fill
+          unoptimized
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover"
+          style={{ objectPosition: product.imagePosition ?? "center" }}
+          onError={() => setPhotoFailed(true)}
+        />
       ) : null}
-    </svg>
+    </span>
   );
 }

@@ -23,6 +23,16 @@ export interface Product {
   priceNote?: string;
   /** Hue (0-360) used to render the generated product artwork. */
   hue: number;
+  /**
+   * Official / press photograph of the product, hot-linked from the vendor or
+   * its newsroom. When absent (or blocked by the host) the generated artwork
+   * is shown instead.
+   */
+  image?: string;
+  /** Accessible description for `image`. Defaults to "brand + name". */
+  imageAlt?: string;
+  /** CSS object-position for `image`, e.g. "50% 15%" for tall photos. */
+  imagePosition?: string;
   specs: Spec[];
   highlights: string[];
   /** Official purchase / product page. */
